@@ -1,5 +1,6 @@
 package company.best.the.hangman;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -20,6 +21,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
     EditText inputLetter;
     Button guessButton;
     int errors = 0;
+    int guesses = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +36,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         game.reset();
         visibleWord.setText(game.getVisibleWord());
     }
+
 
     private void nextImage(){
         ImageView image = findViewById(R.id.image);
@@ -64,32 +67,55 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void getGameState(){
+        Intent resultIntent = new Intent(this, resultActivity.class);
         if(game.isGameIsLost() || game.isGameIsWon()){
-            guessButton.setEnabled(false);
-            TextView result = findViewById(R.id.resulttext);
             if(game.isGameIsWon()){
-                result.setText("You win!");
-            }else if(game.isGameIsLost()){
-                result.setText("You lose!\nThe word was: " + game.getWordToGuess());
+                resultIntent.putExtra("result", true);
+                resultIntent.putExtra("guesses", guesses);
+            }else{
+                resultIntent.putExtra("result", false);
+                resultIntent.putExtra("word", game.getWordToGuess());
             }
+            startActivityForResult(resultIntent, 0);
+            //startActivity(resultIntent);
+            reset();
         }
+    }
+
+    private void reset() {
+        errors = -1;
+        nextImage();
+        guesses = 0;
+        game.reset();
+        TextView wrongLetters = findViewById(R.id.incorrecttext);
+        wrongLetters.setText("Incorrect letters:");
+        TextView visibleWord = findViewById(R.id.wordtoguess);
+        visibleWord.setText(game.getVisibleWord());
     }
 
     @Override
     public void onClick(View v) {
         TextView wrongLetters = findViewById(R.id.incorrecttext);
+        String letter = inputLetter.getText().toString().toLowerCase();
+        System.out.println("The guessed letter is: " + letter);
+        System.out.println("usedLetters contains:");
+        for(int i = 0; i < game.getUsedLetters().size(); i++){
+            System.out.println(game.getUsedLetters().get(i));
+        }
         switch(v.getId()){
             case R.id.guessbutton:
-                if(!game.getUsedLetters().contains(inputLetter.getText().toString())){
-                    game.guessLetter(inputLetter.getText().toString().toLowerCase());
+                if(!game.getUsedLetters().contains(letter)){
+                    game.guessLetter(letter);
+                    guesses++;
                     if(!game.wasLastLetterCorrect()){
                         wrongLetters.append(" " + inputLetter.getText());
                         nextImage();
                     }
+                    visibleWord.setText(game.getVisibleWord());
+
+                    getGameState();
                 }
-                visibleWord.setText(game.getVisibleWord());
                 inputLetter.setText("");
-                getGameState();
                 break;
         }
     }

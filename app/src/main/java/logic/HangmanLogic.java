@@ -9,8 +9,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
+import company.best.the.hangman.R;
+
 public class HangmanLogic implements Serializable {
-    ArrayList<String> possibleWords = new ArrayList<String>();
+    private String[] possibleWords = new String[41238];
     private String wordToGuess;
     private ArrayList<String> usedLetters = new ArrayList<String>();
     private String visibleWord;
@@ -19,7 +21,7 @@ public class HangmanLogic implements Serializable {
     private boolean lastLetterWasCorrect;
     private boolean gameIsWon;
     private boolean gameIsLost;
-    private File wordList;
+
 
     public ArrayList<String> getUsedLetters() {
         return usedLetters;
@@ -50,26 +52,25 @@ public class HangmanLogic implements Serializable {
     }
 
     public HangmanLogic(InputStream inputFile) {
+
         this.inputFile = inputFile;
+        readFile();
+    }
+
+    private void readFile(){
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputFile));
+        for(int i = 0; i < 41238; i++){
+            try {
+                possibleWords[i] = br.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private String getNewWord(){
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputFile));
-        try {
-            int nextWord = new Random(System.currentTimeMillis()).nextInt(41237);
-            System.out.println(nextWord);
-            for(int i = 0; i < nextWord; i++){
-                br.readLine();
-            }
-            String line = br.readLine();
-            System.out.println(line);
-           // br.close();
-            return line;
-            //possibleWords.add(br.readLine());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        int nextWord = new Random(System.currentTimeMillis()).nextInt(41237);
+        return possibleWords[nextWord];
     }
     public void reset() {
         usedLetters.clear();
@@ -84,6 +85,7 @@ public class HangmanLogic implements Serializable {
     private void updateVisibleWord() {
         visibleWord = "";
         gameIsWon = true;
+        System.out.println("wordtoguess is: " + wordToGuess);
         for (int i = 0; i < wordToGuess.length(); i++) {
             String letter = wordToGuess.substring(i, i + 1);
             if (usedLetters.contains(letter)) {
@@ -97,18 +99,13 @@ public class HangmanLogic implements Serializable {
 
     public void guessLetter(String letter) {
         if (letter.length() != 1) return;
-        System.out.println("The letter of choice was: " + letter);
         if (usedLetters.contains(letter)) return;
         if (gameIsWon || gameIsLost) return;
-
         usedLetters.add(letter);
-
         if (wordToGuess.contains(letter)) {
             lastLetterWasCorrect = true;
-            System.out.println("The letter was correct: " + letter);
         } else {
             lastLetterWasCorrect = false;
-            System.out.println("The letter was wrong: " + letter);
             wrongGuesses++;
             if (wrongGuesses > 5) {
                 gameIsLost = true;
