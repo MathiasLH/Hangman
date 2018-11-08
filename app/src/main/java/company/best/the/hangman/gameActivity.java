@@ -76,8 +76,8 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
                 resultIntent.putExtra("result", false);
                 resultIntent.putExtra("word", game.getWordToGuess());
             }
-            startActivityForResult(resultIntent, 0);
-            //startActivity(resultIntent);
+            //startActivityForResult(resultIntent, 0);
+            startActivity(resultIntent);
             reset();
         }
     }
