@@ -1,6 +1,8 @@
 package company.best.the.hangman;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -9,7 +11,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import logic.HangmanLogic;
 
@@ -17,11 +24,15 @@ import static company.best.the.hangman.MainActivity.game;
 
 public class gameActivity extends AppCompatActivity implements View.OnClickListener{
     HangmanLogic game;
+    ArrayList<String> words;
     TextView visibleWord, wrongLettersText;
     EditText inputLetter;
     Button guessButton;
     int errors = 0;
     int guesses = 0;
+    final int mode = Activity.MODE_PRIVATE;
+    final String myPrefs = "MyPreferences_001";
+    SharedPreferences sp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,13 +41,18 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         guessButton.setOnClickListener(this);
         visibleWord = findViewById(R.id.wordtoguess);
         inputLetter = findViewById(R.id.inputletter);
-
-        InputStream wordStream = getApplicationContext().getResources().openRawResource(R.raw.words);
-        game = new HangmanLogic(wordStream);
+        sp = getSharedPreferences(myPrefs, 0);
+        InputStream wordStream = getApplicationContext().getResources().openRawResource(R.raw.words_small);
+        words = readFile(wordStream);
+        game = new HangmanLogic(searchWords());
         game.reset();
         visibleWord.setText(game.getVisibleWord());
     }
 
+    private ArrayList<String> searchWords() {
+        return new ArrayList<>(Arrays.asList(words.stream().filter(x -> !sp.getBoolean("allowDashes", true) ? !x.contains("-"):true)
+                .filter(x-> x.length() <= sp.getInt("maxWordLength", 0)).toArray(String[]::new)));
+    }
 
     private void nextImage(){
         ImageView image = findViewById(R.id.image);
@@ -76,7 +92,6 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
                 resultIntent.putExtra("result", false);
                 resultIntent.putExtra("word", game.getWordToGuess());
             }
-            //startActivityForResult(resultIntent, 0);
             startActivity(resultIntent);
             reset();
         }
@@ -91,6 +106,19 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         wrongLetters.setText("Incorrect letters:");
         TextView visibleWord = findViewById(R.id.wordtoguess);
         visibleWord.setText(game.getVisibleWord());
+    }
+
+    private ArrayList<String> readFile(InputStream inputFile){
+        ArrayList<String> possibleWords = new ArrayList<String>();
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputFile));
+        for(int i = 0; i < 852; i++){
+            try {
+                possibleWords.add(br.readLine());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return possibleWords;
     }
 
     @Override

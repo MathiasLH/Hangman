@@ -30,7 +30,6 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private TextView wordLength, searchField;
-    private CheckBox allowDashesBox;
     final int mode = Activity.MODE_PRIVATE;
     final String myPrefs = "MyPreferences_001";
     SharedPreferences sp;
@@ -41,13 +40,14 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        InputStream wordStream = getApplicationContext().getResources().openRawResource(R.raw.words_small);
+        words = readFile(wordStream);
         sp = getSharedPreferences(myPrefs, 0);
         mRecyclerView = findViewById(R.id.recycler);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         wordLength = findViewById(R.id.wordlength);
-        InputStream wordStream = getApplicationContext().getResources().openRawResource(R.raw.words);
         searchField = findViewById(R.id.searchfield);
         searchField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -82,35 +82,15 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
                 updateWordLength();
             }
         });
-        allowDashesBox = findViewById(R.id.dashescheckbox);
-        allowDashesBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                updateAllowDashes();
-            }
-        });
-        words = readFile(wordStream);
         mAdapter = new myAdapter(words);
-        updateList();
-        //mRecyclerView.setAdapter(mAdapter);
-
-    }
-
-    private void updateAllowDashes() {
-        editor = sp.edit();
-        editor.putBoolean("allowDashes", allowDashesBox.isChecked());
-        editor.commit();
         updateList();
     }
 
     private void updateWordLength(){
-        System.out.println("Maximum word length was changed.");
         editor = sp.edit();
         if(!wordLength.getText().toString().matches("")){
-            System.out.println("Maximum word length was set to: " + wordLength.getText().toString());
             editor.putInt("maxWordLength", Integer.parseInt(wordLength.getText().toString()));
         }else{
-            System.out.println("Maximum word length was set to: 0");
             editor.putInt("maxWordLength", 0);
         }
         editor.commit();
@@ -126,7 +106,7 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     private ArrayList<String> readFile(InputStream inputFile){
         ArrayList<String> possibleWords = new ArrayList<String>();
         BufferedReader br = new BufferedReader(new InputStreamReader(inputFile));
-        for(int i = 0; i < 41238; i++){
+        for(int i = 0; i < 852; i++){
             try {
                 possibleWords.add(br.readLine());
             } catch (IOException e) {
@@ -137,31 +117,8 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private ArrayList<String> searchWords() {
-        ArrayList<String> newWords = new ArrayList<String>();
-        final int maxLength = sp.getInt("maxWordLength", 0);
-        boolean allowDashes = sp.getBoolean("allowDashes", true);
-        String searchKey = searchField.getText().toString();
-        String[] wordArray = words.stream().filter(i -> i.length() <= maxLength).toArray(String[]::new);
-        newWords = new ArrayList<>(Arrays.asList(wordArray));
-        //x -> sp.getBoolean("allowDashes", true) && !x.contains("-")
-        return new ArrayList<>(Arrays.asList(words.stream().filter(x -> sp.getBoolean("allowDashes", true) ? !x.contains("-"):true)
-                                                            .filter(x -> x.contains(searchKey)).toArray(String[]::new)));
-
-
-        /*if (allowDashes) {
-            if(maxLength == 0){
-
-            }else{
-
-            }
-        } else {
-            if(maxLength == 0){
-
-            }else{
-
-            }
-        }*/
-
+        return new ArrayList<>(Arrays.asList(words.stream().filter(x -> !searchField.getText().toString().matches("") ? x.contains(searchField.getText().toString()):true)
+                                                            .filter(x-> x.length() <= sp.getInt("maxWordLength", 0)).toArray(String[]::new)));
     }
     @Override
     public void onClick(View v) {

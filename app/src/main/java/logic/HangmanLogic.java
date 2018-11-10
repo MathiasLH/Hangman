@@ -1,4 +1,8 @@
+//Rewrote galgeleglogik to english because danish code is bad practice.
 package logic;
+
+import android.app.Activity;
+import android.content.SharedPreferences;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,12 +11,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import company.best.the.hangman.R;
 
 public class HangmanLogic implements Serializable {
-    private String[] possibleWords = new String[41238];
+    private ArrayList<String> possibleWords;
     private String wordToGuess;
     private ArrayList<String> usedLetters = new ArrayList<String>();
     private String visibleWord;
@@ -21,6 +26,10 @@ public class HangmanLogic implements Serializable {
     private boolean lastLetterWasCorrect;
     private boolean gameIsWon;
     private boolean gameIsLost;
+    final int mode = Activity.MODE_PRIVATE;
+    final String myPrefs = "MyPreferences_001";
+    SharedPreferences sp;
+    SharedPreferences.Editor editor;
 
 
     public ArrayList<String> getUsedLetters() {
@@ -51,26 +60,13 @@ public class HangmanLogic implements Serializable {
         return gameIsWon;
     }
 
-    public HangmanLogic(InputStream inputFile) {
-
-        this.inputFile = inputFile;
-        readFile();
-    }
-
-    private void readFile(){
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputFile));
-        for(int i = 0; i < 41238; i++){
-            try {
-                possibleWords[i] = br.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    public HangmanLogic(ArrayList<String> words) {
+        this.possibleWords = words;
     }
 
     private String getNewWord(){
-        int nextWord = new Random(System.currentTimeMillis()).nextInt(41237);
-        return possibleWords[nextWord];
+        int nextWord = new Random(System.currentTimeMillis()).nextInt(possibleWords.size());
+        return possibleWords.get(nextWord);
     }
     public void reset() {
         usedLetters.clear();
@@ -110,7 +106,6 @@ public class HangmanLogic implements Serializable {
             if (wrongGuesses > 5) {
                 gameIsLost = true;
                 visibleWord = wordToGuess;
-
             }
         }
         updateVisibleWord();
