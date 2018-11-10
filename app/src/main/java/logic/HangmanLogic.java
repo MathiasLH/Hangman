@@ -22,15 +22,9 @@ public class HangmanLogic implements Serializable {
     private ArrayList<String> usedLetters = new ArrayList<String>();
     private String visibleWord;
     private int wrongGuesses;
-    private InputStream inputFile;
     private boolean lastLetterWasCorrect;
     private boolean gameIsWon;
     private boolean gameIsLost;
-    final int mode = Activity.MODE_PRIVATE;
-    final String myPrefs = "MyPreferences_001";
-    SharedPreferences sp;
-    SharedPreferences.Editor editor;
-
 
     public ArrayList<String> getUsedLetters() {
         return usedLetters;
@@ -42,10 +36,6 @@ public class HangmanLogic implements Serializable {
 
     public String getWordToGuess() {
         return wordToGuess;
-    }
-
-    public int getWrongGuesses() {
-        return wrongGuesses;
     }
 
     public boolean wasLastLetterCorrect() {
@@ -76,7 +66,6 @@ public class HangmanLogic implements Serializable {
         wordToGuess = getNewWord();
         updateVisibleWord();
     }
-
 
     private void updateVisibleWord() {
         visibleWord = "";
