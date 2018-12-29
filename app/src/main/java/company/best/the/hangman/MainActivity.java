@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         helpButton.setOnClickListener(this);
         sp = getSharedPreferences(myPrefs, 0);
         InputStream wordStream = getApplicationContext().getResources().openRawResource(R.raw.words_small);
-        if(true){
+        if(sp.getBoolean("firstRun", true)){
             createLocalWordList(readFile(wordStream));
             editor = sp.edit();
             editor.putBoolean("firstRun", false);

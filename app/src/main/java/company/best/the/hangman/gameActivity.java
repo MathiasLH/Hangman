@@ -1,6 +1,7 @@
 package company.best.the.hangman;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
@@ -12,7 +13,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -127,10 +132,6 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         BufferedReader br = null;
         try {
             br = new BufferedReader(new InputStreamReader(openFileInput("internalWords")));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
             String line = br.readLine();
             while(line != null){
                 possibleWords.add(line);
@@ -142,6 +143,8 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         Collections.sort(possibleWords);
         return possibleWords;
     }
+
+
 
     @Override
     public void onClick(View v) {

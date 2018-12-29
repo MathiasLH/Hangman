@@ -1,6 +1,9 @@
 package company.best.the.hangman;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.nfc.Tag;
 import android.support.v7.app.AppCompatActivity;
@@ -20,9 +23,12 @@ import android.widget.Toast;
 import org.w3c.dom.Element;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,6 +42,7 @@ import java.util.Set;
 public class settingsActivity extends AppCompatActivity implements View.OnClickListener{
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
+    private RecyclerView.Adapter niceAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private TextView wordLength, searchField;
     final int mode = Activity.MODE_PRIVATE;
@@ -107,15 +114,37 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
 
     private void updateList(){
         ArrayList<String> newWords = searchWords();
-        RecyclerView.Adapter niceAdapter = new myAdapter(newWords);
+        niceAdapter = new myAdapter(newWords);
         ((myAdapter) niceAdapter).setOnItemClickListener(new myAdapter.ClickListener() {
             @Override
             public void onItemClick(int position, View v) {
-                Toast.makeText(getBaseContext(), newWords.get(position),
-                        Toast.LENGTH_LONG).show();
+               createDialogue(position);
             }
         });
         mRecyclerView.setAdapter(niceAdapter);
+    }
+
+    private void createDialogue(int position){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        ArrayList<String> newWords = searchWords();
+        builder.setTitle(newWords.get(position));
+        builder.setMessage("Delete word?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                deleteLine(newWords.get(position));
+                ((myAdapter) niceAdapter).removeAt(position);
+                dialogInterface.dismiss();
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
     private ArrayList<String> readFile(){
@@ -137,6 +166,25 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
         }
         Collections.sort(possibleWords);
         return possibleWords;
+    }
+
+
+
+    private void deleteLine(String word){
+        getBaseContext().deleteFile("internalWords");
+        try {
+            FileOutputStream fOut = openFileOutput("internalWords", Context.MODE_PRIVATE);
+            for(String s: words){
+                if(!s.equals(word)){
+                    String str = s + "\n";
+                    fOut.write(str.getBytes());
+                }
+            }
+            fOut.close();
+            words = readFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private ArrayList<String> searchWords() {

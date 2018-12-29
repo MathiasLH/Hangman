@@ -55,6 +55,12 @@ public class myAdapter extends RecyclerView.Adapter<myAdapter.myViewHolder> {
 
     }
 
+    public void removeAt(int position){
+        dataset.remove(position);
+        notifyItemRemoved(position);
+        notifyItemRangeChanged(position, dataset.size());
+    }
+
     public void setOnItemClickListener(ClickListener clickListener){
         myAdapter.clickListener = clickListener;
     }
