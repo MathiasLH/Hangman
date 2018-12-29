@@ -12,11 +12,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import logic.HangmanLogic;
 
@@ -42,8 +44,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         visibleWord = findViewById(R.id.wordtoguess);
         inputLetter = findViewById(R.id.inputletter);
         sp = getSharedPreferences(myPrefs, 0);
-        InputStream wordStream = getApplicationContext().getResources().openRawResource(R.raw.words_small);
-        words = readFile(wordStream);
+        words = readFile();
         game = new HangmanLogic(searchWords());
         game.reset();
         visibleWord.setText(game.getVisibleWord());
@@ -51,7 +52,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
 
     private ArrayList<String> searchWords() {
         return new ArrayList<>(Arrays.asList(words.stream().filter(x -> !sp.getBoolean("allowDashes", true) ? !x.contains("-"):true)
-                .filter(x-> x.length() <= sp.getInt("maxWordLength", 0)).toArray(String[]::new)));
+                .filter(x-> x.length() <= sp.getInt("maxWordLength", 10)).toArray(String[]::new)));
     }
 
     private void nextImage(){
@@ -85,6 +86,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
     private void getGameState(){
         Intent resultIntent = new Intent(this, resultActivity.class);
         if(game.isGameIsLost() || game.isGameIsWon()){
+            updateScore(game.isGameIsWon());
             if(game.isGameIsWon()){
                 resultIntent.putExtra("result", true);
                 resultIntent.putExtra("guesses", guesses);
@@ -95,6 +97,18 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(resultIntent);
             reset();
         }
+    }
+
+    private void updateScore(boolean gameWon){
+        SharedPreferences.Editor editor = sp.edit();
+        if(gameWon){
+            int prevWins = sp.getInt("gameWins", 0);
+            editor.putInt("gameWins", prevWins+1);
+        }else{
+            int prevLosses = sp.getInt("gameLosses", 0);
+            editor.putInt("gameLosses", prevLosses+1);
+        }
+        editor.apply();
     }
 
     private void reset() {
@@ -108,16 +122,24 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         visibleWord.setText(game.getVisibleWord());
     }
 
-    private ArrayList<String> readFile(InputStream inputFile){
+    private ArrayList<String> readFile(){
         ArrayList<String> possibleWords = new ArrayList<String>();
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputFile));
-        for(int i = 0; i < 852; i++){
-            try {
-                possibleWords.add(br.readLine());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(openFileInput("internalWords")));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
+        try {
+            String line = br.readLine();
+            while(line != null){
+                possibleWords.add(line);
+                line = br.readLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Collections.sort(possibleWords);
         return possibleWords;
     }
 

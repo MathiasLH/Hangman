@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -11,11 +12,18 @@ import java.util.ArrayList;
 
 public class myAdapter extends RecyclerView.Adapter<myAdapter.myViewHolder> {
     private ArrayList<String> dataset;
-    public static class myViewHolder extends RecyclerView.ViewHolder{
+    private static ClickListener clickListener;
+    public static class myViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         public CardView niceCard;
         public myViewHolder(CardView cv){
             super(cv);
+            cv.setOnClickListener(this);
             niceCard = cv;
+        }
+
+        @Override
+        public void onClick(View view) {
+            clickListener.onItemClick(getAdapterPosition(), view);
         }
     }
 
@@ -45,6 +53,15 @@ public class myAdapter extends RecyclerView.Adapter<myAdapter.myViewHolder> {
         tv.setText(dataset.get(position));
         //holder.niceText.setText(dataset[position]);
 
+    }
+
+    public void setOnItemClickListener(ClickListener clickListener){
+        myAdapter.clickListener = clickListener;
+    }
+
+    public interface ClickListener {
+        void onItemClick(int position, View v);
+        //void onItemLongClick(int position, View v);
     }
 
     @Override
