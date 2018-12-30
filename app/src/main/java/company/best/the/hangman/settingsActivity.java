@@ -114,14 +114,27 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
 
     private void updateList(){
         ArrayList<String> newWords = searchWords();
-        niceAdapter = new myAdapter(newWords);
-        ((myAdapter) niceAdapter).setOnItemClickListener(new myAdapter.ClickListener() {
-            @Override
-            public void onItemClick(int position, View v) {
-               createDialogue(position);
-            }
-        });
-        mRecyclerView.setAdapter(niceAdapter);
+        if(!newWords.isEmpty()){
+            niceAdapter = new myAdapter(newWords);
+            ((myAdapter) niceAdapter).setOnItemClickListener(new myAdapter.ClickListener() {
+                @Override
+                public void onItemClick(int position, View v) {
+                    createDialogue(position);
+                }
+            });
+            mRecyclerView.setAdapter(niceAdapter);
+        }else{
+            ArrayList<String> emptyArray = new ArrayList<>();
+            emptyArray.add("Add word");
+            niceAdapter = new myAdapter(emptyArray);
+            ((myAdapter) niceAdapter).setOnItemClickListener(new myAdapter.ClickListener() {
+                @Override
+                public void onItemClick(int position, View v) {
+                    addWordToList();
+                }
+            });
+            mRecyclerView.setAdapter(niceAdapter);
+        }
     }
 
     private void createDialogue(int position){
@@ -145,6 +158,19 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
         });
         AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    public void addWordToList(){
+        try {
+            FileOutputStream fOut = openFileOutput("internalWords", Context.MODE_APPEND);
+            String s = searchField.getText().toString() + "\n";
+            fOut.write(s.getBytes());
+            fOut.close();
+            words = readFile();
+            updateList();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private ArrayList<String> readFile(){
