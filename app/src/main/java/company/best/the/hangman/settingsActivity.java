@@ -243,6 +243,7 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
         return sb.toString();
     }
 
+    
     //A hangman application has no need for internet communication in my opinion,
     //however to satisfy requirements, here is the function for fetching words from a website.
     //also please dont just throw "Exception".
