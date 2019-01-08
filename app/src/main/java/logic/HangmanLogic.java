@@ -8,10 +8,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
 
 import company.best.the.hangman.R;
@@ -52,6 +54,13 @@ public class HangmanLogic implements Serializable {
 
     public HangmanLogic(ArrayList<String> words) {
         this.possibleWords = words;
+    }
+    public HangmanLogic(){
+        try {
+            //fetchWordsFromInternet();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String getNewWord(){
@@ -99,4 +108,5 @@ public class HangmanLogic implements Serializable {
         }
         updateVisibleWord();
     }
+
 }

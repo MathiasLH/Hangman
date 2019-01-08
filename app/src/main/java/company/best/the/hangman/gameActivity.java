@@ -52,6 +52,14 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         words = readFile();
         game = new HangmanLogic(searchWords());
         game.reset();
+        /*if(sp.getBoolean("useLocalWords", true)){
+            words = readFile();
+
+            game.reset();
+        }else{
+            game = new HangmanLogic();
+        }*/
+
         visibleWord.setText(game.getVisibleWord());
     }
 
@@ -131,7 +139,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
         ArrayList<String> possibleWords = new ArrayList<String>();
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new InputStreamReader(openFileInput("internalWords")));
+            br = new BufferedReader(new InputStreamReader(openFileInput(sp.getBoolean("useLocalWords", true) ? "internalWords":"internetWords")));
             String line = br.readLine();
             while(line != null){
                 possibleWords.add(line);
@@ -172,4 +180,7 @@ public class gameActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
+
+
+
 }

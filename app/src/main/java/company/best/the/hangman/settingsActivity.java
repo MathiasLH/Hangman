@@ -5,39 +5,29 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.nfc.Tag;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.ArraySet;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import org.w3c.dom.Element;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.HashSet;
 
 public class settingsActivity extends AppCompatActivity implements View.OnClickListener{
     private RecyclerView mRecyclerView;
@@ -45,6 +35,8 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     private RecyclerView.Adapter niceAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private TextView wordLength, searchField;
+    private RadioButton onlineWords, offlineWords;
+    private RadioGroup wordListGroup;
     final int mode = Activity.MODE_PRIVATE;
     final String myPrefs = "MyPreferences_001";
     SharedPreferences sp;
@@ -55,13 +47,41 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        words = readFile();
         sp = getSharedPreferences(myPrefs, 0);
+        words = readFile();
         mRecyclerView = findViewById(R.id.recycler);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         wordLength = findViewById(R.id.wordlength);
+        wordListGroup = findViewById(R.id.wordlistGroup);
+        offlineWords = wordListGroup.findViewById(R.id.offlineRadio);
+        offlineWords.setChecked(sp.getBoolean("useLocalWords", true));
+        onlineWords = wordListGroup.findViewById(R.id.onlineRadio);
+        onlineWords.setChecked(!sp.getBoolean("useLocalWords", false));
+        wordListGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                editor = sp.edit();
+                if(offlineWords.isChecked()){
+                    editor.putBoolean("useLocalWords", true);
+                    editor.commit();
+                    createLocalWordList(readFile(),"internalWords");
+                    updateList();
+                }else{
+                    editor.putBoolean("useLocalWords", false);
+                    editor.commit();
+                    words.clear();
+                    words.add("Loading...");
+                    updateList();
+                    try {
+                        new fetchWordsTask().execute(new URL("https://www.google.com"));
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
         searchField = findViewById(R.id.searchfield);
         searchField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -162,7 +182,7 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
 
     public void addWordToList(){
         try {
-            FileOutputStream fOut = openFileOutput("internalWords", Context.MODE_APPEND);
+            FileOutputStream fOut = openFileOutput(sp.getBoolean("useLocalWords", true) ? "internalWords":"internetWords", Context.MODE_APPEND);
             String s = searchField.getText().toString() + "\n";
             fOut.write(s.getBytes());
             fOut.close();
@@ -177,7 +197,9 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
         ArrayList<String> possibleWords = new ArrayList<String>();
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new InputStreamReader(openFileInput("internalWords")));
+
+            br = new BufferedReader(new InputStreamReader(openFileInput(sp.getBoolean("useLocalWords", true) ? "internalWords":"internetWords")));
+            //br = new BufferedReader(new InputStreamReader(openFileInput("internalWords")));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -194,12 +216,59 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
         return possibleWords;
     }
 
+    private void createLocalWordList(ArrayList<String> words, String name){
+        {
+            try {
+                FileOutputStream fOut = openFileOutput(name, Context.MODE_PRIVATE);
+                for(String s: words){
+                    String str = s + "\n";
+                    fOut.write(str.getBytes());
+                }
+                fOut.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            this.words = words;
+        }
+    }
 
+    public static String fetchURL(String URL) throws IOException{
+        BufferedReader br = new BufferedReader(new InputStreamReader(new URL(URL).openStream()));
+        StringBuilder sb = new StringBuilder();
+        String line = br.readLine();
+        while(line != null){
+            sb.append(line + "\n");
+            line = br.readLine();
+        }
+        return sb.toString();
+    }
+
+    //A hangman application has no need for internet communication in my opinion,
+    //however to satisfy requirements, here is the function for fetching words from a website.
+    //also please dont just throw "Exception".
+    public ArrayList<String> fetchWordsFromInternet() throws Exception{
+        String data = fetchURL("https://en.wikipedia.org/wiki/Main_Page");
+        data = data.substring(data.indexOf("<body")).
+                replaceAll("<.+?>", " ").toLowerCase().
+                replaceAll("&#198;", "æ").
+                replaceAll("&#230;", "æ").
+                replaceAll("&#216;", "ø").
+                replaceAll("&#248;", "ø").
+                replaceAll("&oslash;", "ø").
+                replaceAll("&#229;", "å").
+                replaceAll("[^a-zæøå]", " ").
+                replaceAll(" [a-zæøå] "," ").
+                replaceAll(" [a-zæøå][a-zæøå] "," ");
+        words.clear();
+        words.addAll(new HashSet<String>(Arrays.asList(data.split(" "))));
+        Collections.sort(words);
+        return words;
+    }
 
     private void deleteLine(String word){
-        getBaseContext().deleteFile("internalWords");
+        getBaseContext().deleteFile(sp.getBoolean("useLocalWords", true) ? "internalWords":"internetWords");
         try {
-            FileOutputStream fOut = openFileOutput("internalWords", Context.MODE_PRIVATE);
+            FileOutputStream fOut = openFileOutput(sp.getBoolean("useLocalWords", true) ? "internalWords":"internetWords", Context.MODE_PRIVATE);
             for(String s: words){
                 if(!s.equals(word)){
                     String str = s + "\n";
@@ -221,4 +290,25 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
 
     }
+
+    private class fetchWordsTask extends AsyncTask<URL, Integer, Long>{
+
+        @Override
+        protected Long doInBackground(URL... urls) {
+
+            try {
+                createLocalWordList(fetchWordsFromInternet(), "internetWords");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Long aLong) {
+            super.onPostExecute(aLong);
+            updateList();
+        }
+    }
+
 }

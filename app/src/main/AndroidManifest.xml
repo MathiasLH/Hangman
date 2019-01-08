@@ -21,5 +21,6 @@
         <activity android:name=".resultActivity" />
         <activity android:name=".aboutActivity"></activity>
     </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
 
 </manifest>
