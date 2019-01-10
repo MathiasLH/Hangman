@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -51,6 +52,17 @@ public class myAdapter extends RecyclerView.Adapter<myAdapter.myViewHolder> {
     public void onBindViewHolder(@NonNull myViewHolder holder, int position) {
         TextView tv = holder.niceCard.findViewById(R.id.text_view_id);
         tv.setText(dataset.get(position));
+        ImageView iv = holder.niceCard.findViewById(R.id.difficulty);
+        if(dataset.get(position).length() <4){
+            //easy
+            iv.setImageResource(R.drawable.easy);
+        }else if(dataset.get(position).length() >= 4 && dataset.get(position).length() <8){
+            //medium
+            iv.setImageResource(R.drawable.medium);
+        }else{
+            //hard
+            iv.setImageResource(R.drawable.hard);
+        }
         //holder.niceText.setText(dataset[position]);
 
     }
