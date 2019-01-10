@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(sp.getBoolean("firstRun", true)){
             createLocalWordList(readFile(wordStream));
             editor = sp.edit();
+            editor.putInt("maxWordLength", 10);
+            editor.putBoolean("useLocalWords", true);
             editor.putBoolean("firstRun", false);
             editor.apply();
         }

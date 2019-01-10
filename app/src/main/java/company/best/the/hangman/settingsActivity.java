@@ -99,7 +99,7 @@ public class settingsActivity extends AppCompatActivity implements View.OnClickL
                 updateList();
             }
         });
-        wordLength.setText(Integer.toString(sp.getInt("maxWordLength", 0)));
+        wordLength.setText(Integer.toString(sp.getInt("maxWordLength", 10)));
         wordLength.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
